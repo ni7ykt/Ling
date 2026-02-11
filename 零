@@ -1,869 +1,708 @@
---这个范围没有限制
---zy
-
-local old
-old = hookmetamethod(game:GetService("StarterGui"), "__namecall", newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        local args = {...}
-        if method == "SetCore" and args[1] == "SendNotification" then
-            local options = args[2]
-            if type(options) == "table" and 
-               tostring(options.Title) == "零脚本" and 
-               tostring(options.Text) == "小轩制作" 
-            then
-                local modifiedOptions = table.clone(options)
-                modifiedOptions.Text = "1"
-            end
-        end
-     return old(self, ...)
-end))
-
-
-local main = require(game:GetService("ReplicatedStorage").Util.CameraShaker.Main)
-local returnnil = function() return nil end
-
-main.StartShake = returnnil
-main.ShakeOnce = returnnil
-main.ShakeSustain = returnnil
-main.CameraShakeInstance = returnnil
-main.Shake = returnnil
-main.Start = returnnil
-
-
-game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "零脚本",
-	Text = "小轩制作",
-	Duration = 5;
-})
-wait(0.1)
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera 
-local workspace = game:GetService("Workspace")  
-local Player = Players.LocalPlayer  
-local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/mknhghv/67/refs/heads/main/UI"))()  
-local win = ui:new("零中心")
-local UITab1 = win:Tab("公告",'7734068321')
-local UITab2 = win:Tab("脚本",'7734068321')
-local UITab3 = win:Tab("秒杀",'7734068321')
-local UITab4 = win:Tab("透视",'7734068321')
-local UITab5 = win:Tab("传送",'7734068321')
-
-local about = UITab1:section("公告",true)
-
-about:Label("小轩制作")
-about:Label("脚本测试中")
-local about = UITab2:section("脚本",true)
-about:Slider("视角缩放距离", "Slider",  128, 128, 10000, false, function(Value)
-    game:GetService("Players").LocalPlayer.CameraMaxZoomDistance = Value
-end)
--- 自动v4
-
-local toggleKey = "自动v4"
-local autoV4Task = nil
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local function getToggleState(key)
-    if not _G.ToggleStates then _G.ToggleStates = {} end
-    return _G.ToggleStates[key] or false
-end
-
-local function callAwakeningRemote()
-    local Backpack = LocalPlayer:FindFirstChild("Backpack")
-    if not Backpack then return end
-    
-    local Awakening = Backpack:FindFirstChild("Awakening")
-    if not Awakening then return end
-    
-    local RemoteFunc = Awakening:FindFirstChild("RemoteFunction")
-    if not RemoteFunc or not RemoteFunc:IsA("RemoteFunction") then return end
-    
-    local success, err = pcall(function()
-        RemoteFunc:InvokeServer(true)
-    end)
-    if not success then
-        warn("自动v4调用失败：", err)
-    end
-end
-
-local function toggleAutoV4(enable)
-    if autoV4Task then
-        task.cancel(autoV4Task)
-        autoV4Task = nil
-    end
-    
-    if enable then
-        autoV4Task = task.spawn(function()
-            while getToggleState(toggleKey) do
-                callAwakeningRemote()
-                task.wait(1) 
-            end
-            autoV4Task = nil
-        end)
-    end
-end
-
-about:Toggle(toggleKey, "Toggle", false, function(IsEnabled)
-    if not _G.ToggleStates then _G.ToggleStates = {} end
-    _G.ToggleStates[toggleKey] = IsEnabled
-    
-    toggleAutoV4(IsEnabled)
-end)
-
--- 缝合
-
-about:Button("飞行",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fly"))()
-end)
-
-about:Button("法天象地",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/法天像地"))()
-end)
-
-about:Button("redz",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/redz"))()
-end)
-
-about:Button("皮脚本",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/皮"))()
-end)
-
-local VirtualUser = game:GetService("VirtualUser")
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-    -- 當系統檢測到你閒置時，模擬滑鼠點擊螢幕，這比跳躍更穩
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new(0,0))
-    print("零域 | 已攔截掛機檢測，持續運行中...")
-end)
-
-about:Button("fps优化（关闭不了一点傻逼）",function()
-	loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaoxuan-77/-/refs/heads/main/fps优化"))()
-end)
-
-about:Button("hoho",function()
-	loadstring(game:HttpGet('https://raw.githubusercontent.com/acsu123/HOHO_H/main/Loading_UI'))()
-end)
-
--- 大佛功能区
-
-local attackTab = UITab3:section("秒杀",true)
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService")
-local Player = Players.LocalPlayer
-local _ENV = (getgenv or getrenv or getfenv)()
-local Settings = {AutoClick = true, ClickDelay = 0.3}
-Settings.Distance = 5000
-local Module = {}
-local _G = _G or getfenv(0)._G
-_G.FastAttack = _G.FastAttack ~= nil and _G.FastAttack or true
-
-local function SafeWaitForChild(parent, childName)
-	local success, result = pcall(function() return parent:WaitForChild(childName, 10) end)
-	if not success or not result then warn("未找到组件: " .. childName) end
-	return result
-end
-
-local function CheckAndGetCoreComponents()
-	local Remotes, Modules, Net, RegisterAttack, RegisterHit, Enemies = nil, nil, nil, nil, nil, nil
-	while true do
-		Remotes = SafeWaitForChild(ReplicatedStorage, "Remotes")
-		Modules = SafeWaitForChild(ReplicatedStorage, "Modules")
-		Net = Modules and SafeWaitForChild(Modules, "Net") or nil
-		RegisterAttack = Net and SafeWaitForChild(Net, "RE/RegisterAttack") or nil
-		RegisterHit = Net and SafeWaitForChild(Net, "RE/RegisterHit") or nil
-		Enemies = SafeWaitForChild(workspace, "Enemies")
-		if Remotes and Modules and Net and RegisterAttack and RegisterHit and Enemies then
-			return Remotes, Net, RegisterAttack, RegisterHit, Enemies
-		end
-		warn("核心组件缺失，持续重试中...")
-		task.wait(1)
-	end
-end
-
-local function IsAlive(character)
-	if not character then return false end
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	return humanoid and humanoid.Health and humanoid.Health > 0
-end
-
-local function GetRandomValidPart(target)
-	local allParts = target:GetDescendants()
-	local validParts = {}
-	local humanoidRootPart = target:FindFirstChild("HumanoidRootPart")
-	local boneParts = humanoidRootPart and humanoidRootPart.Parent:GetDescendants() or {}
-	for _, part in ipairs(allParts) do
-		if part:IsA("BasePart") and part.CanCollide and table.find(boneParts, part) then
-			table.insert(validParts, part)
-		end
-	end
-	return #validParts > 0 and validParts[math.random(1, #validParts)] or target:FindFirstChild("HumanoidRootPart")
-end
-
-Module.FastAttack = (function()
-	if _ENV.rz_FastAttack then return _ENV.rz_FastAttack end
-	local FastAttack = {
-		Distance = 10000,
-		attackMobs = true,
-		attackPlayers = true,
-		Equipped = nil,
-		IsRunning = _G.FastAttack,
-		consecutiveFailures = 0,
-		maxConsecutiveFailures = 5
-	}
-
-	local function ProcessEnemies(OthersEnemies, Folder)
-		if not Folder or not FastAttack.attackMobs then return nil end
-		local BasePart = nil
-		for _, Enemy in Folder:GetChildren() do
-			if Enemy == Player.Character or not IsAlive(Enemy) then continue end
-			local foundPart = GetRandomValidPart(Enemy)
-			if foundPart and Player:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
-				table.insert(OthersEnemies, {Enemy, foundPart})
-				BasePart = foundPart
-			end
-		end
-		return BasePart
-	end
-
-	local function ProcessRealPlayers(OthersEnemies)
-		if not FastAttack.attackPlayers then return nil end
-		local BasePart = nil
-		for _, OtherPlayer in Players:GetPlayers() do
-			if OtherPlayer == Player then continue end
-			local OtherChar = OtherPlayer.Character
-			if not IsAlive(OtherChar) then continue end
-			local foundPart = GetRandomValidPart(OtherChar)
-			if foundPart and Player:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
-				table.insert(OthersEnemies, {OtherChar, foundPart})
-				BasePart = foundPart
-			end
-		end
-		return BasePart
-	end
-
-	function FastAttack:Attack(BasePart, OthersEnemies)
-		local _, Net, temp_RegisterAttack, temp_RegisterHit, _ = CheckAndGetCoreComponents()
-		if not (BasePart and OthersEnemies and #OthersEnemies > 0 and temp_RegisterAttack and temp_RegisterHit) then
-			self.consecutiveFailures = self.consecutiveFailures + 1
-			if self.consecutiveFailures >= self.maxConsecutiveFailures then
-				self.consecutiveFailures = 0
-				self.Equipped = Player.Character and IsAlive(Player.Character) and Player.Character:FindFirstChildOfClass("Tool")
-			end
-			task.delay(0.5, function() self:AttackNearest() end)
-			return
-		end
-		self.consecutiveFailures = 0
-		temp_RegisterAttack:FireServer(Settings.ClickDelay or 0)
-		temp_RegisterHit:FireServer(BasePart, OthersEnemies)
-	end
-
-	function FastAttack:AttackNearest()
-		if not self.IsRunning then return end
-		local _, _, _, _, Enemies = CheckAndGetCoreComponents()
-		local OthersEnemies = {}
-		local Part1 = ProcessEnemies(OthersEnemies, Enemies)
-		local Part2 = ProcessRealPlayers(OthersEnemies)
-		if #OthersEnemies > 0 then
-			self:Attack(Part1 or Part2, OthersEnemies)
-		else
-			task.wait(0)
-		end
-	end
-
-	function FastAttack:BladeHits()
-		if not self.IsRunning then return end
-		local Equipped = Player.Character and IsAlive(Player.Character) and Player.Character:FindFirstChildOfClass("Tool")
-		if Equipped and Equipped.ToolTip ~= "Gun" then
-			self:AttackNearest()
-		else
-			task.wait(0)
-		end
-	end
-
-	task.spawn(function()
-		while true do
-			task.wait(Settings.ClickDelay)
-			if Settings.AutoClick and FastAttack.IsRunning then
-				FastAttack:BladeHits()
-			else
-				task.wait()
-			end
-		end
-	end)
-
-	_ENV.rz_FastAttack = FastAttack
-	return FastAttack
-end)()
-
--- UI控件绑定
-attackTab:Toggle("开关", "FastAttackToggle", _G.FastAttack, function(state)
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.IsRunning = state
-		_G.FastAttack = state
-	end
-end)
-
-attackTab:Textbox("范围", "AttackRange", "10000", function(text)
-	local num = tonumber(text) or 10000
-	num = math.floor(math.clamp(num, 1, 10000))
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.Distance = num
-	end
-end)
-
-attackTab:Textbox("攻速", "ClickDelay", "0.1", function(text)
-	local num = tonumber(text) or 0.1
-	num = math.round(math.clamp(num, 0.01, 2) * 100) / 100
-	Settings.ClickDelay = num
-end)
-
-attackTab:Toggle("打怪", "AttackMobsToggle", true, function(state)
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.attackMobs = state
-	end
-end)
-
-attackTab:Toggle("打人", "AttackPlayersToggle", true, function(state)
-	if _ENV.rz_FastAttack then
-		_ENV.rz_FastAttack.attackPlayers = state
-	end
-end)
-
--- 组件恢复逻辑
-task.spawn(function()
-	while true do
-		task.wait(1)
-		if not _ENV.rz_FastAttack then
-			warn("⚠️ 快速攻击组件未完全加载，持续尝试恢复...")
-			while not _ENV.rz_FastAttack do
-				task.wait(0.5)
-				if _G.FastAttack then
-					local Remotes, Net, RegisterAttack, RegisterHit, Enemies = CheckAndGetCoreComponents()
-					Module.FastAttack = Module.FastAttack or (function()
-						local FastAttack = {
-							Distance=2500,
-							attackMobs=true,
-							attackPlayers=true,
-							Equipped=nil,
-							IsRunning=_G.FastAttack,
-							consecutiveFailures=0,
-							maxConsecutiveFailures=5
-						}
-
-						local function ProcessEnemies(OthersEnemies, Folder)
-							if not Folder or not FastAttack.attackMobs then return nil end
-							local BasePart = nil
-							for _, Enemy in Folder:GetChildren() do
-								if Enemy == Player.Character or not IsAlive(Enemy) then continue end
-								local foundPart = GetRandomValidPart(Enemy)
-								if foundPart and Player:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
-									table.insert(OthersEnemies, {Enemy, foundPart})
-									BasePart = foundPart
-								end
-							end
-							return BasePart
-						end
-
-						local function ProcessRealPlayers(OthersEnemies)
-							if not FastAttack.attackPlayers then return nil end
-							local BasePart = nil
-							for _, OtherPlayer in Players:GetPlayers() do
-								if OtherPlayer == Player then continue end
-								local OtherChar = OtherPlayer.Character
-								if not IsAlive(OtherChar) then continue end
-								local foundPart = GetRandomValidPart(OtherChar)
-								if foundPart and Player:DistanceFromCharacter(foundPart.Position) < FastAttack.Distance then
-									table.insert(OthersEnemies, {OtherChar, foundPart})
-									BasePart = foundPart
-								end
-							end
-							return BasePart
-						end
-
-						function FastAttack:Attack(BasePart, OthersEnemies)
-							local _, Net, temp_RegisterAttack, temp_RegisterHit, _ = CheckAndGetCoreComponents()
-							if not (BasePart and OthersEnemies and #OthersEnemies > 0 and temp_RegisterAttack and temp_RegisterHit) then
-								self.consecutiveFailures = self.consecutiveFailures + 1
-								if self.consecutiveFailures >= self.maxConsecutiveFailures then
-									self.consecutiveFailures = 0
-									self.Equipped = Player.Character and IsAlive(Player.Character) and Player.Character:FindFirstChildOfClass("Tool")
-								end
-								task.delay(0.5, function() self:AttackNearest() end)
-								return
-							end
-							self.consecutiveFailures = 0
-							temp_RegisterAttack:FireServer(Settings.ClickDelay or 0)
-							temp_RegisterHit:FireServer(BasePart, OthersEnemies)
-						end
-
-						function FastAttack:AttackNearest()
-							if not self.IsRunning then return end
-							local _, _, _, _, Enemies = CheckAndGetCoreComponents()
-							local OthersEnemies = {}
-							local Part1 = ProcessEnemies(OthersEnemies, Enemies)
-							local Part2 = ProcessRealPlayers(OthersEnemies)
-							if #OthersEnemies > 0 then
-								self:Attack(Part1 or Part2, OthersEnemies)
-							end
-						end
-
-						function FastAttack:BladeHits()
-							local Equipped = Player.Character and IsAlive(Player.Character) and Player.Character:FindFirstChildOfClass("Tool")
-							if Equipped and Equipped.ToolTip ~= "Gun" then
-								self:AttackNearest()
-							end
-						end
-
-						task.spawn(function()
-							while true do
-								task.wait(Settings.ClickDelay)
-								if Settings.AutoClick and FastAttack.IsRunning then
-									FastAttack:BladeHits()
-								else
-									task.wait(0.1)
-								end
-							end
-						end)
-
-						_ENV.rz_FastAttack = FastAttack
-						return FastAttack
-					end)()
-				end
-			end
-		end
-	end
-end)
-
-
--- 移速功能
-
-attackTab:Textbox("速度", "TranslateAccelSpeed", "输入速度值", function(Value)
-    local speed = tonumber(Value)
-    if speed then
-        getfenv().translateSpeed = speed
-    end
-end)
-
-attackTab:Toggle("加速开关", "TranslateAccelToggle", false, function(State)
-    getfenv().translateAccelEnabled = State
-    
-    if State then
-        if getfenv().sudu then
-            getfenv().sudu:Disconnect()
-            getfenv().sudu = nil
-        end
-        
-        getfenv().translateConnection = game:GetService("RunService").Heartbeat:Connect(function()
-            if game:GetService("Players").LocalPlayer.Character and 
-               game:GetService("Players").LocalPlayer.Character.Humanoid and 
-               game:GetService("Players").LocalPlayer.Character.Humanoid.Parent then
-               
-                local humanoid = game:GetService("Players").LocalPlayer.Character.Humanoid
-                
-                if humanoid.MoveDirection.Magnitude > 0 then
-                    local moveDirection = humanoid.MoveDirection
-                    local acceleration = moveDirection * (getfenv().translateSpeed or 50) / 30
-                    
-                    game:GetService("Players").LocalPlayer.Character:TranslateBy(acceleration)
-                end
-            end
-        end)
-    else
-        if getfenv().translateConnection then
-            getfenv().translateConnection:Disconnect()
-            getfenv().translateConnection = nil
-        end
-    end
-end)
-
--- 透视功能
-local about = UITab4:section("透视",true)
-
-
-local ESPConfig = {
-    MainSwitch = false,     
-    ShowNameDistance = false, 
-    ShowTracer = false,       
-    ShowHealth = false        
-}
-
-local ESPElements = {}
-
-local function CleanupPlayerESP(player)
-    if not ESPElements[player.UserId] then return end
-    
-    if ESPElements[player.UserId].NameHealthESP then
-        ESPElements[player.UserId].NameHealthESP:Destroy()
-        ESPElements[player.UserId].NameHealthESP = nil
-    end
-    if ESPElements[player.UserId].NameHealthUpdateConn then
-        ESPElements[player.UserId].NameHealthUpdateConn:Disconnect()
-        ESPElements[player.UserId].NameHealthUpdateConn = nil
-    end
-    
-    if ESPElements[player.UserId].Tracer then
-        ESPElements[player.UserId].Tracer:Remove()
-        ESPElements[player.UserId].Tracer = nil
-    end
-    if ESPElements[player.UserId].TracerConn then
-        ESPElements[player.UserId].TracerConn:Disconnect()
-        ESPElements[player.UserId].TracerConn = nil
-    end
-end
-
-local function CreateNameDistanceHealthESP(player)
-    if not player.Character or not player.Character:FindFirstChild("Head") then return end
-    local head = player.Character.Head
-    
-    if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthESP then
-        ESPElements[player.UserId].NameHealthESP:Destroy()
-    end
-    
-    local billboardGui = Instance.new("BillboardGui")
-    billboardGui.Name = "NameDistanceHealthESP"
-    billboardGui.Adornee = head -- 绑定到玩家头部
-    billboardGui.Size = UDim2.new(0, 120, 0, 50) -- 面板大小
-    billboardGui.StudsOffset = Vector3.new(0, 3.5, 0) -- 面板偏移
-    billboardGui.AlwaysOnTop = true -- 显示在最上层
-    billboardGui.Parent = head
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Parent = billboardGui
-    nameLabel.BackgroundTransparency = 1 -- 背景透明
-    nameLabel.Text = player.Name -- 显示玩家名字
-    nameLabel.Size = UDim2.new(1, 0, 0.33, 0) -- 占面板高度的1/3
-    nameLabel.TextColor3 = Color3.new(1, 1, 1) -- 名字颜色 纯白色
-    nameLabel.TextScaled = true 
-    nameLabel.Font = Enum.Font.GothamSemibold -- 字体 加粗哥特字体
-    
-    local healthLabel = Instance.new("TextLabel")
-    healthLabel.Parent = billboardGui
-    healthLabel.BackgroundTransparency = 1 -- 背景透明
-    healthLabel.Position = UDim2.new(0, 0, 0.33, 0) -- 位于名字标签下方
-    healthLabel.Size = UDim2.new(1, 0, 0.33, 0) -- 占面板高度的1/3
-    healthLabel.TextColor3 = Color3.new(0, 1, 0) -- 初始血量颜色 绿色
-    healthLabel.TextScaled = true 
-    healthLabel.Font = Enum.Font.Gotham -- 字体：普通哥特字体
-    
-    local distanceLabel = Instance.new("TextLabel")
-    distanceLabel.Parent = billboardGui
-    distanceLabel.BackgroundTransparency = 1 -- 背景透明
-    distanceLabel.Position = UDim2.new(0, 0, 0.66, 0) -- 位于血量标签下方
-    distanceLabel.Size = UDim2.new(1, 0, 0.33, 0) -- 占面板高度的1/3
-    distanceLabel.TextColor3 = Color3.new(1, 0.5, 0) -- 距离颜色 橙色
-    distanceLabel.TextScaled = true -- 自动缩放文本大小
-    distanceLabel.Font = Enum.Font.Gotham -- 字体：普通哥特字体
-    
-    local updateConnection = RunService.RenderStepped:Connect(function()
-        if not billboardGui.Parent or not LocalPlayer.Character or not player.Character then 
-            return 
-        end
-        
-        local localRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
-        if localRoot and targetRoot then
-            local distance = (localRoot.Position - targetRoot.Position).Magnitude
-            distanceLabel.Text = string.format("%.1f米", distance)   
-        end
-        
-        local humanoid = player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            local health = math.floor(humanoid.Health) -- 当前血量
-            local maxHealth = math.floor(humanoid.MaxHealth) -- 最大血量
-            
-            local healthPercent = health / maxHealth
-            if healthPercent > 0.7 then
-                healthLabel.TextColor3 = Color3.new(0, 1, 0) -- 健康状态：绿色
-            elseif healthPercent > 0.3 then
-                healthLabel.TextColor3 = Color3.new(1, 1, 0) -- 警告状态：黄色
-            else
-                healthLabel.TextColor3 = Color3.new(1, 0, 0) -- 危险状态：红色
-            end
-            
-            healthLabel.Text = string.format("血量: %d/%d", health, maxHealth)
-        end
-    end)
-    
-    ESPElements[player.UserId] = ESPElements[player.UserId] or {}
-    ESPElements[player.UserId].NameHealthESP = billboardGui
-    ESPElements[player.UserId].NameHealthUpdateConn = updateConnection
-end
-
-local function CreateTracerESP(player)
-    if ESPElements[player.UserId] and ESPElements[player.UserId].Tracer then
-        ESPElements[player.UserId].Tracer:Remove()
-    end
-    
-    local tracer = Drawing.new("Line")
-    tracer.Color = Color3.new(1, 0, 0) -- 射线颜色：鲜红色
-    tracer.Thickness = 2 -- 射线粗细：2像素
-    tracer.Transparency = 0.8 -- 射线透明度：80%（半透明效果）
-    tracer.Visible = false -- 初始隐藏
-    
-    local renderConnection = RunService.RenderStepped:Connect(function()
-        if not ESPConfig.MainSwitch or not ESPConfig.ShowTracer then
-            tracer.Visible = false
-            return
-        end
-        
-        local localChar = LocalPlayer.Character
-        local targetChar = player.Character
-        if not localChar or not targetChar then
-            tracer.Visible = false
-            return
-        end
-        
-        local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
-        if targetRoot then
-            local screenPos, isVisible = Camera:WorldToViewportPoint(targetRoot.Position)
-            if isVisible then
-                tracer.Visible = true
-                tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-                tracer.To = Vector2.new(screenPos.X, screenPos.Y)
-            else
-                tracer.Visible = false
-            end
-        else
-            tracer.Visible = false
-        end
-    end)
-    
-    ESPElements[player.UserId] = ESPElements[player.UserId] or {}
-    ESPElements[player.UserId].Tracer = tracer
-    ESPElements[player.UserId].TracerConn = renderConnection
-end
-
-local function UpdatePlayerESP(player)
-    if player == LocalPlayer then return end
-    
-    if not player.Character then
-        CleanupPlayerESP(player)
-        return
-    end
-    
-    if not player.Character:FindFirstChild("Head") or not player.Character:FindFirstChild("HumanoidRootPart") then
-        CleanupPlayerESP(player)
-        return
-    end
-    
-    if ESPConfig.MainSwitch then
-        CreateTracerESP(player)
-        
-        if ESPConfig.ShowNameDistance or ESPConfig.ShowHealth then
-            CreateNameDistanceHealthESP(player)
-        else
-            if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthESP then
-                ESPElements[player.UserId].NameHealthESP:Destroy()
-                ESPElements[player.UserId].NameHealthESP = nil
-            end
-            if ESPElements[player.UserId] and ESPElements[player.UserId].NameHealthUpdateConn then
-                ESPElements[player.UserId].NameHealthUpdateConn:Disconnect()
-                ESPElements[player.UserId].NameHealthUpdateConn = nil
-            end
-        end
-    else
-        CleanupPlayerESP(player)
-    end
-end
-
-local function UpdateAllESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer then
-            UpdatePlayerESP(player)
-        end
-    end
-end
-
-local function HandlePlayerRespawn(player)
-    local character = player.Character
-    if not character then
-        character = player.CharacterAdded:Wait()
-    end
-    
-    local head = character:WaitForChild("Head", 5)
-    local rootPart = character:WaitForChild("HumanoidRootPart", 5)
-    local humanoid = character:WaitForChild("Humanoid", 5)
-    
-    if head and rootPart and humanoid then
-        task.wait(0.5)
-        UpdatePlayerESP(player)
-        task.wait(1)
-        UpdatePlayerESP(player)
-    end
-end
-
--- 处理新玩家加入
-Players.PlayerAdded:Connect(function(player)
-    if player == LocalPlayer then return end
-    
-    if player.Character then
-        task.spawn(HandlePlayerRespawn, player)
-    end
-    
-    player.CharacterAdded:Connect(function()
-        task.spawn(HandlePlayerRespawn, player)
-    end)
-    
-    player.CharacterRemoving:Connect(function()
-        CleanupPlayerESP(player)
-    end)
-end)
-
-LocalPlayer.CharacterAdded:Connect(function()
-    task.wait(1) 
-    UpdateAllESP()
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(3) 
-        if ESPConfig.MainSwitch then
-            UpdateAllESP()
-        end
-    end
-end)
-
-about:Toggle("透视总开关", "ESP_Main", false, function(enabled)
-    ESPConfig.MainSwitch = enabled
-    UpdateAllESP()
-end)
-
-about:Toggle("显示玩家名字+距离", "ESP_NameDistance", false, function(enabled)
-    ESPConfig.ShowNameDistance = enabled
-    UpdateAllESP()
-end)
-
-about:Toggle("显示玩家血量", "ESP_Health", false, function(enabled)
-    ESPConfig.ShowHealth = enabled
-    UpdateAllESP()
-end)
-
-about:Toggle("射线追踪（屏幕中心）", "ESP_Tracer", false, function(enabled)
-    ESPConfig.ShowTracer = enabled
-    UpdateAllESP()
-end)
-
-
-
-local TP = UITab5:section("传送",false)
-
-
-TP:Button("传送至一海", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelMain")
-end)
-
-TP:Button("传送至二海", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelDressrosa")
-end)
-
-TP:Button("传送至三海", function()
-    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("TravelZou")
-end)
-
-local TP1 = UITab5:section("二海",false)
-TP1:Button("传送至天鹅的房间", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-287.37, 305.81, 592.98)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到豪宅:", targetPosition)
-    end
-end)
-
-TP1:Button("传送至豪宅", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(2286.93, 15.06, 910.51)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到天鹅的房间:", targetPosition)
-    end
-end)
-
-TP1:Button("传送至鬼船里", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-6501.06, 83.11, -123.52)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到鬼船里:", targetPosition)
-    end
-end)
-
-TP1:Button("传送至鬼船外", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(922.78, 123.96, 32842.40)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到鬼船外:", targetPosition)
-    end
-end)
-local TP2 = UITab5:section("三海",false)
-
-TP2:Button("传送至海洋城堡", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-12463.60, 376.26, -7566.08)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到海洋城堡:", targetPosition)
-    end
-end)
-
-TP2:Button("传送至海龟豪宅", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-5060.41, 316.43, -3192.30)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到海龟豪宅:", targetPosition)
-    end
-end)
-
-TP2:Button("传送至司法", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-5096.48, 316.43, -3177.91)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到司法:", targetPosition)
-    end
-end)
-
-TP2:Button("传送至九头蛇", function()
-    local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local targetPosition = Vector3.new(-5027.03, 316.43, -3206.07)
-    
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition)
-        print("已传送到九头蛇:", targetPosition)
-    end
-end)
-
-
-
-
-task.spawn(function()
-    task.wait(2) 
-    UpdateAllESP()
-end)
-
-game:GetService("StarterGui"):SetCore("SendNotification",{
-	Title = "零脚本",
-	Text = "加载完成 祝您使用愉快",
-	Duration = 5;
-})
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ala_jim| Loading...</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. 全局設定與自定義游標 --- */
+        :root {
+            --primary-color: #ffffff;
+            --glass-bg: rgba(15, 15, 15, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            /* 禁止滾動 */
+            height: 100vh;
+            cursor: crosshair;
+            /* 十字準心游標 */
+        }
+
+        /* --- 2. 背景影片/圖片 --- */
+        #bg-media {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+            filter: brightness(0.3) blur(0px);
+            /* 模糊 20px */
+            transition: filter 0.8s ease;
+        }
+
+        /* --- 3. 粒子特效畫布 (雪花) --- */
+        #canvas-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- 4. Click to Enter 遮罩 --- */
+        #enter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 1s ease, visibility 1s;
+        }
+
+        .enter-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            animation: glow 2s infinite ease-in-out;
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            }
+
+            50% {
+                opacity: 1;
+                text-shadow: 0 0 20px rgba(255, 255, 255, 1);
+            }
+        }
+
+        /* --- 5. 主內容卡片 (Guns.lol 風格) --- */
+        #main-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 400px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            transition: transform 0.5s;
+        }
+
+        .avatar:hover {
+            transform: rotate(360deg);
+        }
+
+        .username {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+            /* 模擬高級會員的鑽石/發光名字效果 */
+            background: linear-gradient(90deg, #fff, #b3b3b3, #fff);
+            background-size: 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-anim 3s infinite linear;
+        }
+
+        @keyframes gradient-anim {
+            0% {
+                background-position: 0%;
+            }
+
+            100% {
+                background-position: 200%;
+            }
+        }
+
+        /* --- Glitch Effect --- */
+        .glitch {
+            position: relative;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            /* Matches body background */
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -1px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -1px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% {
+                clip: rect(31px, 9999px, 94px, 0);
+                transform: skew(0.85deg);
+            }
+
+            5% {
+                clip: rect(70px, 9999px, 11px, 0);
+                transform: skew(0.85deg);
+            }
+
+            10% {
+                clip: rect(6px, 9999px, 83px, 0);
+                transform: skew(0.12deg);
+            }
+
+            15% {
+                clip: rect(32px, 9999px, 55px, 0);
+                transform: skew(0.02deg);
+            }
+
+            20% {
+                clip: rect(72px, 9999px, 86px, 0);
+                transform: skew(0.78deg);
+            }
+
+            25% {
+                clip: rect(6px, 9999px, 3px, 0);
+                transform: skew(0.66deg);
+            }
+
+            30% {
+                clip: rect(67px, 9999px, 91px, 0);
+                transform: skew(0.53deg);
+            }
+
+            35% {
+                clip: rect(51px, 9999px, 9px, 0);
+                transform: skew(0.86deg);
+            }
+
+            40% {
+                clip: rect(96px, 9999px, 7px, 0);
+                transform: skew(0.05deg);
+            }
+
+            45% {
+                clip: rect(30px, 9999px, 9px, 0);
+                transform: skew(0.24deg);
+            }
+
+            50% {
+                clip: rect(48px, 9999px, 63px, 0);
+                transform: skew(0.21deg);
+            }
+
+            55% {
+                clip: rect(2px, 9999px, 34px, 0);
+                transform: skew(0.95deg);
+            }
+
+            60% {
+                clip: rect(59px, 9999px, 4px, 0);
+                transform: skew(0.39deg);
+            }
+
+            65% {
+                clip: rect(25px, 9999px, 41px, 0);
+                transform: skew(0.18deg);
+            }
+
+            70% {
+                clip: rect(71px, 9999px, 1px, 0);
+                transform: skew(0.04deg);
+            }
+
+            75% {
+                clip: rect(46px, 9999px, 7px, 0);
+                transform: skew(0.79deg);
+            }
+
+            80% {
+                clip: rect(59px, 9999px, 2px, 0);
+                transform: skew(0.74deg);
+            }
+
+            85% {
+                clip: rect(54px, 9999px, 5px, 0);
+                transform: skew(0.01deg);
+            }
+
+            90% {
+                clip: rect(59px, 9999px, 20px, 0);
+                transform: skew(0.76deg);
+            }
+
+            95% {
+                clip: rect(26px, 9999px, 97px, 0);
+                transform: skew(0.63deg);
+            }
+
+            100% {
+                clip: rect(53px, 9999px, 79px, 0);
+                transform: skew(0.1deg);
+            }
+        }
+
+        @keyframes glitch-anim2 {
+            0% {
+                clip: rect(65px, 9999px, 100px, 0);
+                transform: skew(0.4deg);
+            }
+
+            5% {
+                clip: rect(52px, 9999px, 74px, 0);
+                transform: skew(0.58deg);
+            }
+
+            10% {
+                clip: rect(79px, 9999px, 85px, 0);
+                transform: skew(0.35deg);
+            }
+
+            15% {
+                clip: rect(75px, 9999px, 5px, 0);
+                transform: skew(0.05deg);
+            }
+
+            20% {
+                clip: rect(67px, 9999px, 61px, 0);
+                transform: skew(0.68deg);
+            }
+
+            25% {
+                clip: rect(10px, 9999px, 23px, 0);
+                transform: skew(0.16deg);
+            }
+
+            30% {
+                clip: rect(1px, 9999px, 69px, 0);
+                transform: skew(0.85deg);
+            }
+
+            35% {
+                clip: rect(51px, 9999px, 16px, 0);
+                transform: skew(0.97deg);
+            }
+
+            40% {
+                clip: rect(78px, 9999px, 4px, 0);
+                transform: skew(0.86deg);
+            }
+
+            45% {
+                clip: rect(50px, 9999px, 32px, 0);
+                transform: skew(0.66deg);
+            }
+
+            50% {
+                clip: rect(36px, 9999px, 21px, 0);
+                transform: skew(0.2deg);
+            }
+
+            55% {
+                clip: rect(74px, 9999px, 69px, 0);
+                transform: skew(0.38deg);
+            }
+
+            60% {
+                clip: rect(4px, 9999px, 91px, 0);
+                transform: skew(0.65deg);
+            }
+
+            65% {
+                clip: rect(93px, 9999px, 25px, 0);
+                transform: skew(0.05deg);
+            }
+
+            70% {
+                clip: rect(54px, 9999px, 31px, 0);
+                transform: skew(0.48deg);
+            }
+
+            75% {
+                clip: rect(68px, 9999px, 14px, 0);
+                transform: skew(0.97deg);
+            }
+
+            80% {
+                clip: rect(21px, 9999px, 96px, 0);
+                transform: skew(0.59deg);
+            }
+
+            85% {
+                clip: rect(1px, 9999px, 11px, 0);
+                transform: skew(0.79deg);
+            }
+
+            90% {
+                clip: rect(73px, 9999px, 94px, 0);
+                transform: skew(0.07deg);
+            }
+
+            95% {
+                clip: rect(31px, 9999px, 4px, 0);
+                transform: skew(0.08deg);
+            }
+
+            100% {
+                clip: rect(7px, 9999px, 36px, 0);
+                transform: skew(0.47deg);
+            }
+        }
+
+        .badges {
+            margin-bottom: 5px;
+            font-size: 1rem;
+            color: #ddd;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+
+        .uid {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            font-family: monospace;
+        }
+
+        .badges i {
+            margin: 0 3px;
+            cursor: help;
+        }
+
+        .bio-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 15px 0;
+            min-height: 24px;
+            font-size: 0.9rem;
+            color: #ccc;
+            font-family: 'Courier New', monospace;
+            /* 打字機字體 */
+        }
+
+        /* --- 社交按鈕 --- */
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .link-item {
+            display: block;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .link-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        }
+
+        /* --- 底部資訊 --- */
+        .footer {
+            margin-top: 25px;
+            font-size: 0.7rem;
+            color: #666;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* 隱藏原生播放器 */
+        audio {
+            display: none;
+        }
+
+        .cursor-trail {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: cyan;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px cyan, 0 0 20px cyan;
+        }
+    </style>
+</head>
+
+<body>
+
+    <img id="bg-media"
+        src="https://cdn.discordapp.com/attachments/1423894284016291880/1451614944633294958/IMG_0783.jpg?ex=6946d144&is=69457fc4&hm=20e6cff4f57af65a7cc558fcd686623dfe69d7c7c57eaf8c9534446c6047b1fe&"
+        alt="Background">
+
+    <canvas id="canvas-overlay"></canvas>
+
+    <audio id="bg-music" loop>
+        <source src="https://audio.jukehost.co.uk/Vg3wTJAMYlx19fKCoHNI0XnnrSnZfJos" type="audio/mp3">
+    </audio>
+
+    <div id="enter-overlay">
+        <div class="enter-text">click to enter...</div>
+    </div>
+
+    <div id="main-card">
+        <img src="https://cdn.discordapp.com/attachments/1423894284016291880/1451614438502301858/IMG_0738.png?ex=6946d0cb&is=69457f4b&hm=5a5f0c89b93a3d51cd66a479a9e5b55ecef9b44de0af499b2a1f764c2c0d1c52&"
+            alt="Profile" class="avatar">
+
+        <div class="username glitch" data-text="Ala_jim">Ala_jim</div>
+
+        <div class="badges">
+            <i class="fas fa-crown" title="Premium"></i>
+            <i class="fas fa-code" title="Developer"></i>
+            <i class="fas fa-terminal" title="Hacker"></i>
+            <i class="fas fa-check-circle" title="Verified"></i>
+        </div>
+        <div class="uid">UID: 3</div>
+
+        <div class="bio-box">
+            <span id="typewriter"></span><span class="cursor">|</span>
+        </div>
+
+        <div class="links">
+            <a href="https://discord.gg/VvcdzzXX" target="_blank" class="link-item">
+                <i class="fab fa-discord"></i> Discord Server
+            </a>
+            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1&pp=ygUXbmV2ZXIgZ29ubmEgZ2l2ZSB5b3UgdXCgBwE%3D"
+                target="_blank" class="link-item">
+                <i class="fab fa-youtube"></i> YouTube Channel
+            </a>
+            <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1&pp=ygUXbmV2ZXIgZ29ubmEgZ2l2ZSB5b3UgdXCgBwE%3D"
+                target="_blank" class="link-item">
+                <i class="fab fa-github"></i> GitHub Profile
+            </a>
+        </div>
+
+        <div class="footer">
+            <span><i class="fas fa-eye"></i> 14,203</span>
+            <span><i class="fas fa-copyright"></i> 2024</span>
+        </div>
+    </div>
+
+    <script>
+        // --- 設定區 ---
+        const pageTitle = "Ala_jim | Welcome | "; // 滾動標題文字
+        const bioText = ["Money", "Mamma Mia!", "Original Motion P", "Welcome to my profile."]; // 打字機內容陣列
+        const typingSpeed = 100;
+        const deleteSpeed = 50;
+        const pauseTime = 1500; // 打完一句後的暫停時間
+
+        // --- 變數 ---
+        let titleIndex = 0;
+        const enterOverlay = document.getElementById('enter-overlay');
+        const mainCard = document.getElementById('main-card');
+        const bgMedia = document.getElementById('bg-media');
+        const bgMusic = document.getElementById('bg-music');
+        const typewriterSpan = document.getElementById('typewriter');
+
+        // --- 1. 點擊進入邏輯 ---
+        enterOverlay.addEventListener('click', () => {
+            // 淡出遮罩
+            enterOverlay.style.opacity = '0';
+            enterOverlay.style.visibility = 'hidden';
+
+            // 顯示卡片
+            mainCard.style.opacity = '1';
+            mainCard.style.visibility = 'visible';
+            mainCard.style.transform = 'translate(-50%, -50%) scale(1)';
+
+            // 播放媒體
+            // bgMedia.play(); // Image requires no play
+            bgMusic.volume = 0.4;
+            bgMusic.play().catch(e => console.log("Audio play failed:", e));
+
+            // 啟動打字機與標題滾動
+            initTypewriter();
+            setInterval(scrollTitle, 200);
+        });
+
+        // --- 2. 標題滾動特效 ---
+        function scrollTitle() {
+            document.title = pageTitle.substring(titleIndex) + pageTitle.substring(0, titleIndex);
+            titleIndex = (titleIndex + 1) % pageTitle.length;
+        }
+
+        // --- 3. 打字機特效 ---
+        let textIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+
+        function initTypewriter() {
+            const currentText = bioText[textIndex];
+
+            if (isDeleting) {
+                typewriterSpan.textContent = currentText.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typewriterSpan.textContent = currentText.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            let typeSpeedCurrent = isDeleting ? deleteSpeed : typingSpeed;
+
+            if (!isDeleting && charIndex === currentText.length) {
+                typeSpeedCurrent = pauseTime;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                textIndex = (textIndex + 1) % bioText.length;
+                typeSpeedCurrent = 500;
+            }
+
+            setTimeout(initTypewriter, typeSpeedCurrent);
+        }
+
+        // --- 4. 粒子特效 (簡易版雪花 Canvas) ---
+        const canvas = document.getElementById('canvas-overlay');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2;
+                this.speedY = Math.random() * 1 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            for (let i = 0; i < 100; i++) { // 粒子數量
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+
+        // --- 5. 游標拖尾特效 ---
+        const cursorTrails = [];
+        const maxTrails = 20;
+
+        document.addEventListener('mousemove', (e) => {
+            const trail = document.createElement('div');
+            trail.className = 'cursor-trail';
+            trail.style.left = e.pageX + 'px';
+            trail.style.top = e.pageY + 'px';
+            document.body.appendChild(trail);
+
+            cursorTrails.push({
+                element: trail,
+                alpha: 1.0
+            });
+
+            if (cursorTrails.length > maxTrails) {
+                const old = cursorTrails.shift();
+                document.body.removeChild(old.element);
+            }
+        });
+
+        // Loop to animate fade out
+        function animateTrails() {
+            for (let i = 0; i < cursorTrails.length; i++) {
+                const item = cursorTrails[i];
+                item.alpha -= 0.05;
+                item.element.style.opacity = item.alpha;
+                item.element.style.transform = `scale(${item.alpha})`;
+            }
+            // Remove invisible
+            while (cursorTrails.length > 0 && cursorTrails[0].alpha <= 0) {
+                const old = cursorTrails.shift();
+                if (old.element.parentNode) old.element.parentNode.removeChild(old.element);
+            }
+            requestAnimationFrame(animateTrails);
+        }
+        animateTrails();
+
+    </script>
+</body>
+
+</html>
